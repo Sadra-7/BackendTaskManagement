@@ -78,7 +78,7 @@ from app.auth import SECRET_KEY, ALGORITHM
 #         raise HTTPException(status_code=401, detail="Token expired or invalid")
 
 
-
+# sljdfhgiuwhgiouaqhrgui
 
 # def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
 #     token = credentials.credentials
