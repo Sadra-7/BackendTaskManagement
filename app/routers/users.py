@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.schemas.user import UserCreate, UserLogin, Token, UserOut
 from app.crud import user_crud
-from app.utils.token import create_access_token , SECRET_KEY, ALGORITHM
+from app.auth.token import create_access_token , SECRET_KEY, ALGORITHM
 from app.auth.dependencies import get_current_user
 from app.models.user import User
 
@@ -27,7 +27,7 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
 
     access_token = create_access_token(
         data={"sub": db_user.email},
-        expires_delta=timedelta(minutes=1)  # ⏱ تغییر زمان انقضا از اینجا
+        expires_delta=timedelta(minutes=1)  # تنظیم مدت اعتبار توکن
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -41,3 +41,9 @@ def read_users_me(current_user=Depends(get_current_user)):
 def get_all_users(db: Session = Depends(get_db)):
     users = db.query(User).all()
     return users
+
+
+
+
+
+
