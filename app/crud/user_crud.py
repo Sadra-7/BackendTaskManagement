@@ -3,6 +3,8 @@ from app.models.user import User
 from app.schemas.user import UserCreate
 from app.utils.hashing import hash_password
 from passlib.context import CryptContext
+from datetime import datetime
+from app.db.database import SessionLocal
 
 def create_user(db: Session, user: UserCreate):
     hashed_pw = hash_password(user.password)
@@ -27,4 +29,15 @@ def verify_password(plain_password, hashed_password):
 def get_user_by_email(db: Session, email: str):
     return db.query(User).filter(User.email == email).first()
 
+def set_reset_password_token(db, user: User):
+    user.generate_reset_token()
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
 
+def get_user_by_reset_token(db, token: str):
+    return db.query(User).filter(
+        User.reset_password_token == token,
+        User.reset_password_expire > datetime.utcnow()
+    ).first()
