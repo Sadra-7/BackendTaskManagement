@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from app.db.database import Base
 
@@ -7,9 +7,11 @@ class Task(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
     description = Column(String, nullable=True)
-    status = Column(String, default="pending")  # این خط اضافه شد
+    status = Column(String, default="pending")
     column_id = Column(Integer, ForeignKey("columns.id"), nullable=True)
     owner_id = Column(Integer, ForeignKey("users.id"))
+    startDate = Column(DateTime, nullable=True)
+    endDate = Column(DateTime, nullable=True)
 
     column = relationship("Column", back_populates="tasks")
     owner = relationship("User", back_populates="tasks")

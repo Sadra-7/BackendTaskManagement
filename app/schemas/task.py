@@ -1,11 +1,13 @@
-
 from pydantic import BaseModel
 from typing import List, Optional
+from datetime import datetime
 
 class TaskBase(BaseModel):
     title: str
     description: Optional[str] = None
     column_id: Optional[int] = None
+    startDate: Optional[datetime] = None
+    endDate: Optional[datetime] = None
 
 class TaskCreate(TaskBase):
     status: str
@@ -15,6 +17,8 @@ class TaskUpdate(BaseModel):
     description: Optional[str] = None
     status: Optional[str] = None
     column_id: Optional[int] = None
+    startDate: Optional[datetime] = None
+    endDate: Optional[datetime] = None
 
 class TaskList(BaseModel):
     tasks: List[TaskCreate]
@@ -25,7 +29,10 @@ class TaskOut(TaskCreate):
 
     class Config:
         from_attributes = True
-        
+
+    
+    
+
 class ColumnBase(BaseModel):
     title: str
 
@@ -38,7 +45,3 @@ class ColumnOut(ColumnBase):
 
     class Config:
         from_attributes = True
-
-
-
-
