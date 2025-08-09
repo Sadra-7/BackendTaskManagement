@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from app.models.task import Task
 from app.schemas.task import TaskCreate, TaskUpdate
 from app.schemas import task as task_schema
+from typing import Optional
 
 def create_task(db: Session, task: TaskCreate, user_id: int):
     db_task = Task(**task.dict(), owner_id=user_id)
@@ -72,3 +73,7 @@ def delete_task(db: Session, task_id: int):
         db.delete(task)
         db.commit()
     return task
+
+
+def get_task_by_id(db: Session, task_id: int) -> Optional[Task]:
+    return db.query(Task).filter(Task.id == task_id).first()

@@ -69,3 +69,21 @@ def save_tasks(
         saved.append(saved_task)
 
     return {"status": "success", "saved": len(saved)}
+
+
+@router.patch("/{task_id}/move", response_model=task_schema.TaskOut)
+def move_task_to_inprogress(
+    task_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    task = task_crud.get_task_by_id(db, task_id)
+
+    if not task or task.owner_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    task.status = "inprogress"
+    db.commit()
+    db.refresh(task)
+
+    return task
