@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.models.task import Task
 from app.schemas.task import TaskCreate, TaskUpdate
 from typing import Optional
@@ -18,9 +18,17 @@ def create_task(db: Session, task: TaskCreate, user_id: int) -> Task:
     db.refresh(db_task)
     return db_task
 
-def get_user_tasks(db: Session, owner_id: int):
-    return db.query(Task).filter(Task.owner_id == owner_id).all()
 
+
+def get_user_tasks(db: Session, owner_id: int):
+    return (
+        db.query(Task)
+        .options(joinedload(Task.label))  # اضافه شده
+        .filter(Task.owner_id == owner_id)
+        .all()
+    )
+
+    
 def update_task(db: Session, task_id: int, task_data: TaskUpdate) -> Optional[Task]:
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:

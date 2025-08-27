@@ -12,9 +12,15 @@ class Task(Base):
     owner_id = Column(Integer, ForeignKey("users.id"))
     startDate = Column(DateTime, nullable=True)
     endDate = Column(DateTime, nullable=True)
-
     column = relationship("Column", back_populates="tasks")
     owner = relationship("User", back_populates="tasks")
+
+    label_id = Column(Integer, ForeignKey("labels.id"), nullable=True)
+
+    label = relationship("Label", back_populates="tasks")
+
+    label = relationship("Label")  # این خط اضافه بشه
+
 
 class Column(Base):
     __tablename__ = "columns"

@@ -7,6 +7,8 @@ from app.utils.hashing import hash_password
 from dotenv import load_dotenv
 from app.models import user, task 
 from app.routers import users, tasks
+from app.routers import tasks, users, labels
+import os
 
 
 
@@ -16,10 +18,14 @@ load_dotenv()
 
 Base.metadata.create_all(bind=engine)
 
+
+KAVENEGAR_API_KEY = os.getenv("KAVENEGAR_API_KEY")
+
 app = FastAPI()
 
 app.include_router(users_router)
 app.include_router(tasks.router)
+app.include_router(labels.router) 
 
 @app.get("/")
 def root():

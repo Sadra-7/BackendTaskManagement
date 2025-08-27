@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
+from app.schemas.label import LabelOut  # فرضی، اگر وجود دارد
 
 class TaskBase(BaseModel):
     title: str
@@ -8,6 +9,7 @@ class TaskBase(BaseModel):
     column_id: Optional[int] = None
     startDate: Optional[datetime] = None
     endDate: Optional[datetime] = None
+    label_id: Optional[int] = None
 
 class TaskCreate(TaskBase):
     status: str
@@ -19,19 +21,21 @@ class TaskUpdate(BaseModel):
     column_id: Optional[int] = None
     startDate: Optional[datetime] = None
     endDate: Optional[datetime] = None
+    label_id: Optional[int] = None
 
 class TaskList(BaseModel):
     tasks: List[TaskCreate]
 
-class TaskOut(TaskCreate):
+class TaskOut(BaseModel):
     id: int
-    owner_id: int
+    title: str
+    status: str
+    startDate: Optional[datetime]  # اصلاح شده به datetime
+    endDate: Optional[datetime]    # اصلاح شده به datetime
+    label: Optional[LabelOut] = None
 
     class Config:
-        from_attributes = True
-
-    
-    
+        orm_mode = True
 
 class ColumnBase(BaseModel):
     title: str
@@ -44,4 +48,4 @@ class ColumnOut(ColumnBase):
     tasks: List[TaskOut] = []
 
     class Config:
-        from_attributes = True
+        orm_mode = True
