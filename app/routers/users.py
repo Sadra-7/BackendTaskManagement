@@ -12,6 +12,8 @@ from app.utils.hashing import hash_password, verify_password
 from app.utils.send_email import send_email
 from fastapi import APIRouter
 from app.utils.send_massage import send_sms
+from app.models.user import User
+from app.crud.user_crud import create_user
 
 router = APIRouter()
 
@@ -24,16 +26,34 @@ def test_sms():
 router = APIRouter(prefix="/users", tags=["Users"])
 security = HTTPBearer()
 
+from fastapi import HTTPException, status
+
 @router.post("/register")
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
-    db_user = user_crud.create_user(db, user)
-    if user.email:
+    # چک کردن یوزرنیم
+    if db.query(User).filter(User.username == user.username).first():
+        raise HTTPException(status_code=400, detail="نام کاربری قبلاً استفاده شده است")
+    
+    # چک کردن ایمیل
+    if user.email and db.query(User).filter(User.email == user.email).first():
+        raise HTTPException(status_code=400, detail="ایمیل قبلاً استفاده شده است")
+    
+    # چک کردن شماره
+    if user.number and db.query(User).filter(User.number == user.number).first():
+        raise HTTPException(status_code=400, detail="شماره تلفن قبلاً استفاده شده است")
+
+    db_user = create_user(db, user)
+
+    # ایمیل خوش‌آمدگویی
+    if db_user.email:
         send_email(
-            to_email=user.email,
+            to_email=db_user.email,
             subject="خوش آمدید!",
-            body=f"{user.username} عزیز، ثبت‌نام شما با موفقیت انجام شد ✅"
+            body=f"{db_user.username} عزیز، ثبت‌نام شما با موفقیت انجام شد ✅"
         )
+    
     return {"message": "User created successfully", "user_id": db_user.id}
+
 
 @router.post("/login", response_model=Token)
 def login(user: UserLogin, db: Session = Depends(get_db)):
