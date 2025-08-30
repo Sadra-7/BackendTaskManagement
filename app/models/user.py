@@ -25,6 +25,7 @@ class User(Base):
     # tasks = relationship("Task", back_populates="owner", cascade="all, delete-orphan")
     # columns = relationship("Column", back_populates="owner", cascade="all, delete-orphan")
     # labels = relationship("Label", back_populates="owner")
+    lists = relationship("List" , back_populates="user" , cascade="all,delete-orphan")
 
 
 

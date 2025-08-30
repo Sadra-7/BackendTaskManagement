@@ -4,16 +4,18 @@ from typing import List as ListType
 from app.db.database import get_db
 from app.schemas import list as list_schema
 from app.crud import list_crud
+from app.routers.users import get_current_user
+from app.models.user import User
 
 router = APIRouter(prefix="/lists" , tags=["lists"])
 
 @router.get("/" , response_model= ListType[list_schema.List])
-def read_lists (db: Session = Depends(get_db)):
-    return list_crud.get_lists(db)
+def read_lists (db: Session = Depends(get_db) , current_user: User = Depends(get_current_user)):
+    return list_crud.get_lists(db , user_id=current_user.id)
 
 @router.post("/" , response_model=list_schema.List)
-def create_list(list_in : list_schema.ListCreate , db:Session = Depends(get_db)):
-    return list_crud.create_list(db, list_in)
+def create_list(list_in : list_schema.ListCreate , db:Session = Depends(get_db) , current_user: User = Depends(get_current_user)):
+    return list_crud.create_list(db, list_in , user_id=current_user.id)
 
 @router.delete("/{list_id}" , response_model=list_schema.List)
 def remove_list(list_id: int , db:Session = Depends(get_db)):

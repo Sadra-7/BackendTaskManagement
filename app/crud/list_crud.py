@@ -3,12 +3,12 @@ from app.models.list import List
 from app.models.card import Card
 from app.schemas import list as list_schema
 
-def get_lists(db: Session):
+def get_lists(db: Session , user_id : int):
 
-    return db.query(List).all()
+    return db.query(List).filter(List.user_id == user_id ).all()
 
-def create_list(db: Session, list_in: list_schema.ListCreate):
-    db_list = List(**list_in.dict())
+def create_list(db: Session, list_in: list_schema.ListCreate , user_id : int):
+    db_list = List(**list_in.dict() , user_id = user_id)
     db.add(db_list)
     db.commit()
     db.refresh(db_list)
