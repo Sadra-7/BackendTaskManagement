@@ -22,9 +22,9 @@ class User(Base):
     role = Column(SqlEnum(UserRole), default=UserRole.USER, nullable=False)
     reset_password_token = Column(String, nullable=True, unique=True)
     reset_password_expire = Column(DateTime, nullable=True)
-    tasks = relationship("Task", back_populates="owner", cascade="all, delete-orphan")
-    columns = relationship("Column", back_populates="owner", cascade="all, delete-orphan")
-    labels = relationship("Label", back_populates="owner")
+    # tasks = relationship("Task", back_populates="owner", cascade="all, delete-orphan")
+    # columns = relationship("Column", back_populates="owner", cascade="all, delete-orphan")
+    # labels = relationship("Label", back_populates="owner")
 
 
 
