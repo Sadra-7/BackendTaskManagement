@@ -1,5 +1,5 @@
 from datetime import timedelta
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 from app.db.database import get_db
@@ -10,41 +10,26 @@ from app.auth.token import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.auth.dependencies import get_current_user, require_role
 from app.utils.hashing import hash_password, verify_password
 from app.utils.send_email import send_email
-from fastapi import APIRouter
 from app.utils.send_massage import send_sms
 from app.models.user import User
-from app.crud.user_crud import create_user
 
 router = APIRouter()
-
-@router.get("/test-sms")
-def test_sms():
-    send_sms("09374394156", "سلام! پیام تست از FastAPI 🚀")
-    return {"message": "SMS sent!"}
-
-
-router = APIRouter(prefix="/users", tags=["Users"])
 security = HTTPBearer()
 
-from fastapi import HTTPException, status
-
-@router.post("/register")
+# =======================
+# ثبت‌نام کاربر
+# =======================
+@router.post("/users/register")
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
-    # چک کردن یوزرنیم
-    if db.query(User).filter(User.username == user.username).first():
+    if db.query(UserModel).filter(UserModel.username == user.username).first():
         raise HTTPException(status_code=400, detail="نام کاربری قبلاً استفاده شده است")
-    
-    # چک کردن ایمیل
-    if user.email and db.query(User).filter(User.email == user.email).first():
+    if user.email and db.query(UserModel).filter(UserModel.email == user.email).first():
         raise HTTPException(status_code=400, detail="ایمیل قبلاً استفاده شده است")
-    
-    # چک کردن شماره
-    if user.number and db.query(User).filter(User.number == user.number).first():
+    if user.number and db.query(UserModel).filter(UserModel.number == user.number).first():
         raise HTTPException(status_code=400, detail="شماره تلفن قبلاً استفاده شده است")
 
-    db_user = create_user(db, user)
+    db_user = user_crud.create_user(db, user)
 
-    # ایمیل خوش‌آمدگویی
     if db_user.email:
         send_email(
             to_email=db_user.email,
@@ -55,7 +40,10 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     return {"message": "User created successfully", "user_id": db_user.id}
 
 
-@router.post("/login", response_model=Token)
+# =======================
+# ورود کاربر و ایجاد توکن
+# =======================
+@router.post("/users/login", response_model=Token)
 def login(user: UserLogin, db: Session = Depends(get_db)):
     if user.email:
         db_user = user_crud.get_user_by_email(db, user.email)
@@ -67,25 +55,34 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
 
     access_token = create_access_token(
         data={
-            "sub": db_user.email or db_user.number,  # هرکدوم موجوده
+            "sub": db_user.email or db_user.number,
             "role": db_user.role.value
         },
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
-@router.get("/me")
-def read_users_me(current_user=Depends(get_current_user)):
+
+# =======================
+# اطلاعات کاربر فعلی
+# =======================
+@router.get("/users/me")
+def read_users_me(current_user: User = Depends(get_current_user)):
     return {"user": current_user}
 
-@router.get("/all", response_model=list[UserOut])
-def get_all_users(db: Session = Depends(get_db)):
+# =======================
+# گرفتن همه کاربران (فقط برای سوپرادمین)
+# =======================
+@router.get("/users/all", response_model=list[UserOut])
+def get_all_users(db: Session = Depends(get_db), current_user=Depends(require_role([UserRole.SUPERADMIN]))):
     users = db.query(UserModel).all()
     return users
 
 
-
-@router.post("/forgot-password")
+# =======================
+# فراموشی رمز عبور
+# =======================
+@router.post("/users/forgot-password")
 def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
     user = None
     if request.email:
@@ -95,10 +92,8 @@ def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db
 
     if not user:
         return {"message": "لینک یا کد بازیابی ارسال شد"}
-    
 
     user = user_crud.set_reset_password_token(db, user)
-    print(user)
     reset_link = f"http://localhost:3000/reset-password?token={user.reset_password_token}"
 
     if request.email:
@@ -115,35 +110,30 @@ def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db
 
     return {"message": "لینک یا کد بازیابی ارسال شد"}
 
-@router.post("/reset-password")
+
+# =======================
+# ریست رمز عبور
+# =======================
+@router.post("/users/reset-password")
 def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db)):
     user = user_crud.get_user_by_reset_token(db, request.token)
-  
-
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="توکن نامعتبر یا منقضی شده است"
-        )
-        
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="توکن نامعتبر یا منقضی شده است")
 
-    # 🔑 هش کردن پسورد جدید
     hashed_password = hash_password(request.new_password)
     user.hashed_password = hashed_password
-
-    # 🚫 پاک کردن توکن و تاریخ انقضا (یکبار مصرف)
     user.reset_password_token = None
     user.reset_password_expire = None
 
     db.commit()
-    db.refresh(user)  # 👈 بهتره refresh هم بشه
-
+    db.refresh(user)
     return {"message": "رمز عبور با موفقیت تغییر کرد ✅"}
 
-@router.patch(
-    "/change-role/{user_id}",
-    dependencies=[Depends(require_role([UserRole.SUPERADMIN]))]
-)
+
+# =======================
+# تغییر نقش کاربر (فقط برای سوپرادمین)
+# =======================
+@router.patch("/users/change-role/{user_id}", dependencies=[Depends(require_role([UserRole.SUPERADMIN]))])
 def change_user_role(user_id: int, new_role: UserRole, db: Session = Depends(get_db)):
     user = db.query(UserModel).filter(UserModel.id == user_id).first()
     if not user:
@@ -153,3 +143,4 @@ def change_user_role(user_id: int, new_role: UserRole, db: Session = Depends(get
     db.commit()
     db.refresh(user)
     return user
+

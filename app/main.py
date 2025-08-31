@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI , Depends
 from fastapi.middleware.cors import CORSMiddleware
 from app.db.database import engine, Base, SessionLocal
 from app.routers.users import router as users_router
@@ -7,6 +7,10 @@ from app.utils.hashing import hash_password
 from dotenv import load_dotenv
 from app.routers import list_router
 import os
+from app.routers import users
+from app.auth.dependencies import get_current_user
+from app.models.user import User
+
 
 load_dotenv()
 
@@ -20,10 +24,19 @@ app = FastAPI()
 app.include_router(users_router)
 app.include_router(list_router.router, prefix="/api")
 
+@app.get("/ping")
+def ping():
+    print("Ping received!")
+    return {"message": "pong"}
+
 
 @app.get("/")
 def root():
     return {"message": "Task Manager Backend is Running ✅"}
+
+@app.get("/debug-token")
+def debug_token(current_user: User = Depends(get_current_user)):
+    return {"user": current_user}
 
 app.add_middleware(
     CORSMiddleware,
