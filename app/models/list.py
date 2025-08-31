@@ -10,7 +10,7 @@ class List(Base):
     
     user_id = Column(Integer, ForeignKey("users.id"))  
     user = relationship("User", back_populates="lists")  
-    
+    color = Column(String , default="#ffffff")
     cards = relationship(
         "Card",
         back_populates="list",

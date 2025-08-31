@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List , Optional
+
 
 class CardBase(BaseModel):
     text: str
@@ -14,6 +15,7 @@ class Card(CardBase):
 
 class ListBase(BaseModel):
     title: str
+    color: Optional[str] = "#ffffff"
 
 class ListCreate(ListBase):
     pass
@@ -23,3 +25,4 @@ class List(ListBase):
     cards: List[Card] = []
     class Config:
         orm_mode = True
+

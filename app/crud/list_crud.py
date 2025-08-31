@@ -35,3 +35,12 @@ def delete_card(db: Session, list_id: int, card_id: int):
         db.delete(db_card)
         db.commit()
     return db_card
+
+def updat_color_list(db : Session , list_id : int , color: str , user_id: int):
+    db_list = db.query(List).filter(List.id == list_id , List.user_id == user_id).first()
+    if not db_list:
+        return None
+    db_list.color = color
+    db.commit()
+    db.refresh(db_list)
+    return db_list

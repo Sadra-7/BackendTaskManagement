@@ -1,4 +1,4 @@
-from fastapi import APIRouter,Depends ,HTTPException
+from fastapi import APIRouter,Depends ,HTTPException , Body
 from sqlalchemy.orm import Session
 from typing import List as ListType
 from app.db.database import get_db
@@ -34,3 +34,15 @@ def remove_card(list_id: int , card_id : int , db:Session = Depends(get_db)):
     if not db_card:
         raise HTTPException(status_code=404 , detail="Card not found")
     return db_card
+
+@router.patch("/{list_id}/color" , response_model=list_schema.List)
+def update_list_color(list_id : int , color_update : dict = Body(...) , db : Session = Depends(get_db), current_user : User = Depends(get_current_user)):
+    color = color_update.get("color")
+    if not color:
+        raise HTTPException(status_code=400 , detail="Color is required")
+    
+    db_list = list_crud.updat_color_list(db , list_id = list_id , color=color , user_id=current_user.id)
+    if not db_list:
+        raise HTTPException(status_code=404 , detail="List not found")
+    return db_list
+
