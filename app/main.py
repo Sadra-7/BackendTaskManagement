@@ -24,10 +24,7 @@ app = FastAPI()
 app.include_router(users_router)
 app.include_router(list_router.router, prefix="/api")
 
-@app.get("/ping")
-def ping():
-    print("Ping received!")
-    return {"message": "pong"}
+
 
 
 @app.get("/")

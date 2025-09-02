@@ -8,8 +8,13 @@ class CardBase(BaseModel):
 class CardCreate(CardBase):
     pass
 
+class CardUpdate(CardBase):
+    pass
+
 class Card(CardBase):
-    id : int
+    id: int
+    list_id: int
+
     class Config:
         orm_mode = True
 
@@ -25,4 +30,9 @@ class List(ListBase):
     cards: List[Card] = []
     class Config:
         orm_mode = True
+
+class ListUpdate(BaseModel):
+    title : Optional[str] = None
+    color : Optional[str] = None
+
 

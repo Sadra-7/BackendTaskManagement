@@ -13,16 +13,16 @@ def get_current_user(
     db: Session = Depends(get_db)
 ):
     
-    print("get current")
+    
     token = credentials.credentials
     payload = verify_access_token(token)
 
-    print("Payload:", payload)  # 🔹 اضافه شده برای دیباگ
+    
     
 
     identity = payload.get("sub")
 
-    print("Identity:", identity)
+    
     if identity is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -32,7 +32,7 @@ def get_current_user(
     user = db.query(User).filter(
         (User.email == identity) | (User.number == identity)
     ).first()
-    print("User from DB: " , user)
+    
 
     if not user:
         raise HTTPException(

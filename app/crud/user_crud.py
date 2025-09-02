@@ -54,7 +54,7 @@ def set_reset_password_token(db: Session, user: User, expire_hours: int = 1) -> 
     token = secrets.token_urlsafe(32)
     user.reset_password_token = token
     user.reset_password_expire = datetime.utcnow() + timedelta(hours=expire_hours)
-    print(token)
+    
     db.add(user)
     db.commit()
     db.refresh(user)

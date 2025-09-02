@@ -46,3 +46,27 @@ def update_list_color(list_id : int , color_update : dict = Body(...) , db : Ses
         raise HTTPException(status_code=404 , detail="List not found")
     return db_list
 
+@router.patch("/{list_id}" , response_model=list_schema.List)
+def update_list(list_id : int , list_update: list_schema.ListUpdate , db: Session = Depends(get_db) , current_user : User = Depends(get_current_user)):
+    db_list = list_crud.update_list(db , list_id = list_id , user_id = current_user.id , title = list_update.title , color = list_update.color)
+    if not db_list:
+        raise HTTPException(status_code=404 , detail="List not found")
+    return db_list 
+
+@router.post("/{list_id}/card", response_model=list_schema.Card)
+def add_card(list_id: int, card_in: list_schema.CardCreate, db: Session = Depends(get_db)):
+    return list_crud.add_card(db, list_id, card_in)
+
+@router.delete("/{list_id}/cards/{card_id}", response_model=list_schema.Card)
+def remove_card(list_id: int, card_id: int, db: Session = Depends(get_db)):
+    db_card = list_crud.delete_card(db, list_id, card_id)
+    if not db_card:
+        raise HTTPException(status_code=404, detail="Card not found")
+    return db_card
+
+@router.patch("/{list_id}/cards/{card_id}", response_model=list_schema.Card)
+def update_card(list_id: int, card_id: int, card_update: list_schema.CardUpdate, db: Session = Depends(get_db)):
+    db_card = list_crud.update_card(db, list_id, card_id, card_update.text)
+    if not db_card:
+        raise HTTPException(status_code=404, detail="Card not found")
+    return db_card

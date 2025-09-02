@@ -44,3 +44,41 @@ def updat_color_list(db : Session , list_id : int , color: str , user_id: int):
     db.commit()
     db.refresh(db_list)
     return db_list
+
+def update_list(db: Session , list_id : int , user_id : int , title : str = None , color: str = None):
+    db_list = db.query(List).filter_by(id = list_id , user_id = user_id).first()
+    if not db_list:
+        return None
+    
+    if title is not None:
+        db_list.title = title
+    if color is not None:
+        db_list.color = color
+
+    db.commit()
+    db.refresh(db_list)
+    return db_list
+
+def add_card(db: Session, list_id: int, card_in):
+    db_card = Card(list_id=list_id, text=card_in.text)
+    db.add(db_card)
+    db.commit()
+    db.refresh(db_card)
+    return db_card
+
+def delete_card(db: Session, list_id: int, card_id: int):
+    db_card = db.query(Card).filter(Card.id == card_id, Card.list_id == list_id).first()
+    if not db_card:
+        return None
+    db.delete(db_card)
+    db.commit()
+    return db_card
+
+def update_card(db: Session, list_id: int, card_id: int, text: str):
+    db_card = db.query(Card).filter(Card.id == card_id, Card.list_id == list_id).first()
+    if not db_card:
+        return None
+    db_card.text = text
+    db.commit()
+    db.refresh(db_card)
+    return db_card
