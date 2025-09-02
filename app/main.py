@@ -10,6 +10,8 @@ import os
 from app.routers import users
 from app.auth.dependencies import get_current_user
 from app.models.user import User
+from app.routers import admin
+
 
 
 load_dotenv()
@@ -23,7 +25,7 @@ app = FastAPI()
 
 app.include_router(users_router)
 app.include_router(list_router.router, prefix="/api")
-
+app.include_router(admin.router)
 
 
 
