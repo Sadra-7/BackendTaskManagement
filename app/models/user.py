@@ -28,6 +28,7 @@ class User(Base):
     # روابط
     lists = relationship("List", back_populates="user", cascade="all, delete-orphan")
     tasks = relationship("Task", back_populates="user", cascade="all, delete-orphan")
+    boards = relationship("Board", back_populates="owner", cascade="all, delete")
 
     # Index فیلترشده برای SQL Server: فقط زمانی که number IS NOT NULL یونیک اعمال می‌شود
     __table_args__ = (
@@ -42,3 +43,5 @@ class User(Base):
     def generate_reset_token(self):
         self.reset_password_token = secrets.token_urlsafe(32)
         self.reset_password_expire = datetime.utcnow() + timedelta(minutes=15)
+
+

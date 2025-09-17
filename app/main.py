@@ -2,6 +2,8 @@ import os
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+from app.routers import boards
+
 
 from app.db.database import engine, Base, SessionLocal
 from app.routers.users import router as users_router
@@ -24,6 +26,7 @@ app = FastAPI()
 app.include_router(users_router)
 app.include_router(list_router.router, prefix="/api")
 app.include_router(admin.router)
+app.include_router(boards.router)
 
 # Root endpoint
 @app.get("/")
