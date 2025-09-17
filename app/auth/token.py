@@ -4,7 +4,7 @@ from fastapi import HTTPException, status
 
 SECRET_KEY = "your-very-secret-key"  # حتماً یک کلید طولانی و امن بذار
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 10
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
 
