@@ -13,7 +13,6 @@ from app.models.user import User
 from app.routers import admin
 
 
-
 load_dotenv()
 
 Base.metadata.create_all(bind=engine)
@@ -39,11 +38,15 @@ def debug_token(current_user: User = Depends(get_current_user)):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[
+        "http://niktick.ir",  
+        "http://niktick.ir" 
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 def init_superadmin(db):
     superadmin_email = "sadra.amini1006@gmail.com"
