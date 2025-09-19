@@ -1,72 +1,67 @@
-from fastapi import APIRouter,Depends ,HTTPException , Body
+# app/routers/list_router.py
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List as ListType
+from typing import List as TypingList
 from app.db.database import get_db
 from app.schemas import list as list_schema
 from app.crud import list_crud
-from app.routers.users import get_current_user
+from app.models.board import Board
+from app.auth.dependencies import get_current_user
 from app.models.user import User
 
-router = APIRouter(prefix="/lists" , tags=["lists"])
+router = APIRouter(prefix="/boards/{board_id}/lists", tags=["lists"])
 
-@router.get("/" , response_model= ListType[list_schema.List])
-def read_lists (db: Session = Depends(get_db) , current_user: User = Depends(get_current_user)):
-    return list_crud.get_lists(db , user_id=current_user.id)
+def _ensure_board_and_owner(db: Session, board_id: int, current_user: User):
+    board = db.query(Board).filter(Board.id == board_id, Board.owner_id == current_user.id).first()
+    if not board:
+        raise HTTPException(status_code=404, detail="Board not found or access denied")
+    return board
 
-@router.post("/" , response_model=list_schema.List)
-def create_list(list_in : list_schema.ListCreate , db:Session = Depends(get_db) , current_user: User = Depends(get_current_user)):
-    return list_crud.create_list(db, list_in , user_id=current_user.id)
+@router.get("/", response_model=TypingList[list_schema.List])
+def read_lists(board_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    _ensure_board_and_owner(db, board_id, current_user)
+    return list_crud.get_lists(db, board_id=board_id)
 
-@router.delete("/{list_id}" , response_model=list_schema.List)
-def remove_list(list_id: int , db:Session = Depends(get_db)):
-    db_list = list_crud.delete_list(db , list_id)
+@router.post("/", response_model=list_schema.List)
+def create_list(board_id: int, list_in: list_schema.ListCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    _ensure_board_and_owner(db, board_id, current_user)
+    return list_crud.create_list(db, board_id=board_id, list_in=list_in)
+
+@router.patch("/{list_id}", response_model=list_schema.List)
+def update_list(board_id: int, list_id: int, list_update: list_schema.ListUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    _ensure_board_and_owner(db, board_id, current_user)
+    db_list = list_crud.update_list(db, list_id=list_id, title=list_update.title, color=list_update.color)
     if not db_list:
-        raise HTTPException(status_code=404 , detail="List not found")
+        raise HTTPException(status_code=404, detail="List not found")
     return db_list
 
-@router.post("/{list_id}/card" , response_model=list_schema.Card)
-def add_card(list_id: int , card_in: list_schema.CardCreate, db : Session = Depends(get_db)):
-    return list_crud.add_card(db , list_id , card_in)
-
-@router.delete("/{list_id}/cards/{card_id}" , response_model=list_schema.Card)
-def remove_card(list_id: int , card_id : int , db:Session = Depends(get_db)):
-    db_card = list_crud.delete_card(db , list_id , card_id)
-    if not db_card:
-        raise HTTPException(status_code=404 , detail="Card not found")
-    return db_card
-
-@router.patch("/{list_id}/color" , response_model=list_schema.List)
-def update_list_color(list_id : int , color_update : dict = Body(...) , db : Session = Depends(get_db), current_user : User = Depends(get_current_user)):
-    color = color_update.get("color")
-    if not color:
-        raise HTTPException(status_code=400 , detail="Color is required")
-    
-    db_list = list_crud.updat_color_list(db , list_id = list_id , color=color , user_id=current_user.id)
+@router.delete("/{list_id}", response_model=list_schema.List)
+def delete_list(board_id: int, list_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    _ensure_board_and_owner(db, board_id, current_user)
+    db_list = list_crud.delete_list(db, list_id=list_id)
     if not db_list:
-        raise HTTPException(status_code=404 , detail="List not found")
+        raise HTTPException(status_code=404, detail="List not found")
     return db_list
 
-@router.patch("/{list_id}" , response_model=list_schema.List)
-def update_list(list_id : int , list_update: list_schema.ListUpdate , db: Session = Depends(get_db) , current_user : User = Depends(get_current_user)):
-    db_list = list_crud.update_list(db , list_id = list_id , user_id = current_user.id , title = list_update.title , color = list_update.color)
-    if not db_list:
-        raise HTTPException(status_code=404 , detail="List not found")
-    return db_list 
+@router.post("/{list_id}/cards", response_model=list_schema.Card)
+def add_card(board_id: int, list_id: int, card_in: list_schema.CardCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    _ensure_board_and_owner(db, board_id, current_user)
+    # (اختیاری) می‌توانیم بررسی کنیم که آن لیست واقعاً متعلق به آن برد است
+    db_list = db.query(Board).filter(Board.id == board_id).first()  # فقط برای وجودِ برد؛ اگر نیاز، لیست را هم چک کن
+    return list_crud.add_card(db, list_id=list_id, card_in=card_in)
 
-@router.post("/{list_id}/card", response_model=list_schema.Card)
-def add_card(list_id: int, card_in: list_schema.CardCreate, db: Session = Depends(get_db)):
-    return list_crud.add_card(db, list_id, card_in)
-
-@router.delete("/{list_id}/cards/{card_id}", response_model=list_schema.Card)
-def remove_card(list_id: int, card_id: int, db: Session = Depends(get_db)):
-    db_card = list_crud.delete_card(db, list_id, card_id)
+@router.patch("/{list_id}/cards/{card_id}", response_model=list_schema.Card)
+def update_card(board_id: int, list_id: int, card_id: int, card_update: list_schema.CardUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    _ensure_board_and_owner(db, board_id, current_user)
+    db_card = list_crud.update_card(db, list_id=list_id, card_id=card_id, text=card_update.text)
     if not db_card:
         raise HTTPException(status_code=404, detail="Card not found")
     return db_card
 
-@router.patch("/{list_id}/cards/{card_id}", response_model=list_schema.Card)
-def update_card(list_id: int, card_id: int, card_update: list_schema.CardUpdate, db: Session = Depends(get_db)):
-    db_card = list_crud.update_card(db, list_id, card_id, card_update.text)
+@router.delete("/{list_id}/cards/{card_id}", response_model=list_schema.Card)
+def delete_card(board_id: int, list_id: int, card_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    _ensure_board_and_owner(db, board_id, current_user)
+    db_card = list_crud.delete_card(db, list_id=list_id, card_id=card_id)
     if not db_card:
         raise HTTPException(status_code=404, detail="Card not found")
     return db_card

@@ -1,6 +1,6 @@
+# app/schemas/list.py
 from pydantic import BaseModel
-from typing import List , Optional
-
+from typing import List as TypingList, Optional
 
 class CardBase(BaseModel):
     text: str
@@ -25,14 +25,13 @@ class ListBase(BaseModel):
 class ListCreate(ListBase):
     pass
 
+class ListUpdate(BaseModel):
+    title: Optional[str] = None
+    color: Optional[str] = None
+
 class List(ListBase):
     id: int
-    cards: List[Card] = []
+    cards: TypingList[Card] = []
+
     class Config:
         orm_mode = True
-
-class ListUpdate(BaseModel):
-    title : Optional[str] = None
-    color : Optional[str] = None
-
-

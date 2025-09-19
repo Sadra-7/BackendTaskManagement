@@ -7,9 +7,6 @@ class BoardBase(BaseModel):
 class BoardCreate(BoardBase):
     pass
 
-class BoardUpdate(BoardBase):  # ← برای ویرایش
-    pass
-
 class Board(BoardBase):
     id: int
     owner_id: int

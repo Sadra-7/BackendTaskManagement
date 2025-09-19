@@ -1,48 +1,49 @@
+# app/main.py
 import os
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-from app.routers import boards
-
 
 from app.db.database import engine, Base, SessionLocal
 from app.routers.users import router as users_router
-from app.routers import list_router, admin
+from app.routers import admin
+from app.routers.boards import router as boards_router
 from app.models.user import User, UserRole
 from app.utils.hashing import hash_password
 from app.auth.dependencies import get_current_user
+from app.routers.list_router import router as list_router
 
 # Load .env
 load_dotenv()
 
-# Create tables
+# Create tables (اگر از alembic استفاده می‌کنید، این خط را فقط در dev روشن نگه دارید)
 Base.metadata.create_all(bind=engine)
 
 KAVENEGAR_API_KEY = os.getenv("KAVENEGAR_API_KEY")
 
-app = FastAPI()
+app = FastAPI(title="Task Manager Backend")
 
 # Include routers
-app.include_router(users_router)
-app.include_router(list_router.router, prefix="/api")
-app.include_router(admin.router)
-app.include_router(boards.router)
+app.include_router(users_router)            # /users...
+app.include_router(boards_router)           # /boards...
+app.include_router(list_router)             # /boards/{board_id}/lists...
+app.include_router(admin.router)            # در صورت وجود
 
 # Root endpoint
 @app.get("/")
 def root():
     return {"message": "Task Manager Backend is Running ✅"}
 
-# Debug token
+# Debug token endpoint
 @app.get("/debug-token")
 def debug_token(current_user: User = Depends(get_current_user)):
     return {"user": current_user}
 
 # CORS middleware
 origins = [
-    "http://localhost:3000",  # برای لوکال
+    "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "http://niktick.ir",      # برای سرور
+    "http://niktick.ir",
 ]
 
 app.add_middleware(
