@@ -1,4 +1,3 @@
-# app/routers/list_router.py
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List as TypingList
@@ -17,6 +16,9 @@ def _ensure_board_and_owner(db: Session, board_id: int, current_user: User):
         raise HTTPException(status_code=404, detail="Board not found or access denied")
     return board
 
+# -----------------------
+# Lists
+# -----------------------
 @router.get("/", response_model=TypingList[list_schema.List])
 def read_lists(board_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     _ensure_board_and_owner(db, board_id, current_user)
@@ -43,11 +45,12 @@ def delete_list(board_id: int, list_id: int, db: Session = Depends(get_db), curr
         raise HTTPException(status_code=404, detail="List not found")
     return db_list
 
+# -----------------------
+# Cards
+# -----------------------
 @router.post("/{list_id}/cards", response_model=list_schema.Card)
 def add_card(board_id: int, list_id: int, card_in: list_schema.CardCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     _ensure_board_and_owner(db, board_id, current_user)
-    # (اختیاری) می‌توانیم بررسی کنیم که آن لیست واقعاً متعلق به آن برد است
-    db_list = db.query(Board).filter(Board.id == board_id).first()  # فقط برای وجودِ برد؛ اگر نیاز، لیست را هم چک کن
     return list_crud.add_card(db, list_id=list_id, card_in=card_in)
 
 @router.patch("/{list_id}/cards/{card_id}", response_model=list_schema.Card)

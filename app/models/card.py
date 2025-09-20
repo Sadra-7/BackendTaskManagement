@@ -1,4 +1,3 @@
-# app/models/card.py
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from app.db.database import Base
@@ -10,4 +9,6 @@ class Card(Base):
     text = Column(String(255), nullable=False)
 
     list_id = Column(Integer, ForeignKey("lists.id"), nullable=False)
+
+    # ارتباط با لیست
     list = relationship("List", back_populates="cards")

@@ -1,4 +1,3 @@
-# app/crud/list_crud.py
 from sqlalchemy.orm import Session
 from app.models.list import List
 from app.models.card import Card
