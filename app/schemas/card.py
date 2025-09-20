@@ -6,12 +6,17 @@ class CardBase(BaseModel):
 class CardCreate(CardBase):
     pass
 
-class CardUpdate(BaseModel):
-    text: str
+class CardUpdate(CardBase):
+    pass
+
+class CardMove(BaseModel):
+    list_id: int
+    position: int
 
 class Card(CardBase):
     id: int
     list_id: int
+    position: int
 
     class Config:
         orm_mode = True

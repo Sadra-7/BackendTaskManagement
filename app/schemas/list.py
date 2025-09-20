@@ -35,3 +35,7 @@ class List(ListBase):
 
     class Config:
         orm_mode = True
+
+class CardUpdatePosition(BaseModel):
+    new_list_id: int
+    new_position: int

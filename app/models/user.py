@@ -1,4 +1,3 @@
-# app/models/user.py
 from __future__ import annotations
 import secrets
 from datetime import datetime, timedelta
@@ -25,12 +24,8 @@ class User(Base):
     reset_password_token = Column(String(128), nullable=True, unique=True)
     reset_password_expire = Column(DateTime, nullable=True)
 
-    # روابط — از اسم کلاس به صورت رشته‌ای استفاده شده تا circular import نشود
     boards = relationship("Board", back_populates="owner", cascade="all, delete-orphan")
     lists = relationship("List", back_populates="user", cascade="all, delete-orphan")
-    # اگر مدل Task هم دارید:
-    # tasks = relationship("Task", back_populates="user", cascade="all, delete-orphan")
-
     tasks = relationship("Task", back_populates="user")
 
     __table_args__ = (
@@ -38,7 +33,6 @@ class User(Base):
             "uq_users_number",
             "number",
             unique=True,
-            # شرط mssql (اینجا با text نوشته شده، در sqlite/psql نادیده گرفته می‌شود)
             mssql_where=text("number IS NOT NULL")
         ),
     )
