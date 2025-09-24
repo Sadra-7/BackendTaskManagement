@@ -16,5 +16,4 @@ class Card(Base):
     members = Column(JSON, default=[])
     attachments = Column(JSON, default=[])
 
-    # رابطه با لیست
     list = relationship("List", back_populates="cards")

@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from datetime import timedelta
+from datetime import timedelta, date
 from app.db.database import get_db
 from app.models.user import User, UserRole
 from app.models.board import Board
@@ -26,6 +26,11 @@ class CreateList(BaseModel):
 
 class CreateCard(BaseModel):
     text: str
+    description: str | None = None
+    start_date: date | None = None
+    end_date: date | None = None
+    members: list[str] = []
+    attachments: list[str] = []
 
 class ChangeUserRole(BaseModel):
     new_role: str
@@ -76,7 +81,17 @@ def get_users_with_boards(db: Session = Depends(get_db)):
                         {
                             "id": l.id,
                             "title": l.title,
-                            "cards": [{"id": c.id, "text": c.text} for c in l.cards]
+                            "cards": [
+                                {
+                                    "id": c.id,
+                                    "text": c.text,
+                                    "description": c.description,
+                                    "start_date": c.start_date,
+                                    "end_date": c.end_date,
+                                    "members": c.members,
+                                    "attachments": c.attachments
+                                } for c in l.cards
+                            ]
                         }
                         for l in b.lists
                     ]
@@ -102,7 +117,18 @@ def get_all_boards(db: Session = Depends(get_db)):
                 {
                     "id": l.id,
                     "title": l.title,
-                    "cards": [{"id": c.id, "text": c.text} for c in l.cards],
+                    "cards": [
+                        {
+                            "id": c.id,
+                            "text": c.text,
+                            "description": c.description,
+                            "start_date": c.start_date,
+                            "end_date": c.end_date,
+                            "members": c.members,
+                            "attachments": c.attachments
+                        }
+                        for c in l.cards
+                    ],
                 }
                 for l in b.lists
             ],
@@ -126,7 +152,17 @@ def get_user_boards(user_id: int, db: Session = Depends(get_db)):
                 {
                     "id": l.id,
                     "title": l.title,
-                    "cards": [{"id": c.id, "text": c.text} for c in l.cards]
+                    "cards": [
+                        {
+                            "id": c.id,
+                            "text": c.text,
+                            "description": c.description,
+                            "start_date": c.start_date,
+                            "end_date": c.end_date,
+                            "members": c.members,
+                            "attachments": c.attachments
+                        } for c in l.cards
+                    ]
                 }
                 for l in b.lists
             ]
@@ -163,7 +199,17 @@ def get_board_lists(board_id: int, db: Session = Depends(get_db)):
         {
             "id": l.id,
             "title": l.title,
-            "cards": [{"id": c.id, "text": c.text} for c in l.cards],
+            "cards": [
+                {
+                    "id": c.id,
+                    "text": c.text,
+                    "description": c.description,
+                    "start_date": c.start_date,
+                    "end_date": c.end_date,
+                    "members": c.members,
+                    "attachments": c.attachments
+                } for c in l.cards
+            ],
         }
         for l in board.lists
     ]
@@ -190,11 +236,32 @@ def create_card_admin(list_id: int, data: CreateCard, db: Session = Depends(get_
     lst = db.query(List).filter(List.id == list_id).first()
     if not lst:
         raise HTTPException(status_code=404, detail="لیست یافت نشد")
-    new_card = Card(text=data.text, list_id=list_id)
+
+    new_card = Card(
+        text=data.text,
+        description=data.description,
+        start_date=data.start_date,
+        end_date=data.end_date,
+        members=data.members,
+        attachments=data.attachments,
+        list_id=list_id
+    )
     db.add(new_card)
     db.commit()
     db.refresh(new_card)
-    return {"message": "کارت ساخته شد", "card": {"id": new_card.id, "text": new_card.text}}
+
+    return {
+        "message": "کارت ساخته شد",
+        "card": {
+            "id": new_card.id,
+            "text": new_card.text,
+            "description": new_card.description,
+            "start_date": new_card.start_date,
+            "end_date": new_card.end_date,
+            "members": new_card.members,
+            "attachments": new_card.attachments
+        }
+    }
 
 # ------------------------
 # تغییر نقش کاربر
