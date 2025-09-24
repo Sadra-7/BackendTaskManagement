@@ -7,37 +7,18 @@ from app.routers.users import router as users_router
 from app.routers import admin
 from app.routers.boards import router as boards_router
 from app.routers.list_router import router as list_router
-from app.routers import cards   # 👈 اضافه شد
+from app.routers import cards  # اضافه شد
 from app.models.user import User, UserRole
 from app.utils.hashing import hash_password
 from app.auth.dependencies import get_current_user
 
-# Load .env
+# Load environment variables
 load_dotenv()
 
-# Create tables (اگر از alembic استفاده می‌کنید، این خط را فقط در dev روشن نگه دارید)
+# Create tables (در صورت استفاده از Alembic فقط برای dev)
 Base.metadata.create_all(bind=engine)
 
-KAVENEGAR_API_KEY = os.getenv("KAVENEGAR_API_KEY")
-
 app = FastAPI(title="Task Manager Backend")
-
-# Include routers
-app.include_router(users_router)            # /users...
-app.include_router(boards_router)           # /boards...
-app.include_router(list_router)             # /boards/{board_id}/lists...
-app.include_router(cards.router)            # /lists/{list_id}/cards...
-app.include_router(admin.router)            # در صورت وجود
-
-# Root endpoint
-@app.get("/")
-def root():
-    return {"message": "Task Manager Backend is Running ✅"}
-
-# Debug token endpoint
-@app.get("/debug-token")
-def debug_token(current_user: User = Depends(get_current_user)):
-    return {"user": current_user}
 
 # CORS middleware
 origins = [
@@ -53,6 +34,23 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include routers
+app.include_router(users_router)            # /users...
+app.include_router(boards_router)           # /boards...
+app.include_router(list_router)             # /boards/{board_id}/lists...
+app.include_router(cards.router)            # /lists/{list_id}/cards...
+app.include_router(admin.router)            # اگر وجود دارد
+
+# Root endpoint
+@app.get("/")
+def root():
+    return {"message": "Task Manager Backend is Running ✅"}
+
+# Debug token endpoint
+@app.get("/debug-token")
+def debug_token(current_user: User = Depends(get_current_user)):
+    return {"user": current_user}
 
 # Initialize superadmin on startup
 def init_superadmin(db):

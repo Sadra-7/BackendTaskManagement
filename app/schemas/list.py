@@ -1,4 +1,3 @@
-# app/schemas/list.py
 from pydantic import BaseModel
 from typing import List as TypingList, Optional
 
