@@ -1,4 +1,3 @@
-# app/schemas/board.py
 from pydantic import BaseModel
 
 class BoardBase(BaseModel):
