@@ -228,9 +228,7 @@ def create_list_admin(board_id: int, data: CreateList, db: Session = Depends(get
     db.refresh(new_list)
     return {"message": "لیست ساخته شد", "list": {"id": new_list.id, "title": new_list.title}}
 
-# ------------------------
-# ساخت کارت جدید در یک لیست
-# ------------------------
+
 @router.post("/lists/{list_id}/cards")
 def create_card_admin(list_id: int, data: CreateCard, db: Session = Depends(get_db)):
     lst = db.query(List).filter(List.id == list_id).first()
