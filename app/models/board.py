@@ -8,6 +8,9 @@ class Board(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(200), nullable=False)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=False)
 
-    owner = relationship("User", back_populates="boards")
+    workspace = relationship("Workspace", back_populates="boards")
     lists = relationship("List", back_populates="board", cascade="all, delete-orphan")
+    owner = relationship("User", back_populates="boards")
+  

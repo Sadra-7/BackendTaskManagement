@@ -4,13 +4,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from app.db.database import engine, Base, SessionLocal
 from app.routers.users import router as users_router
-from app.routers import admin
+from app.routers import users, boards, cards, list_router, admin, workspaces
 from app.routers.boards import router as boards_router
 from app.routers.list_router import router as list_router
 from app.routers import cards  # اضافه شد
 from app.models.user import User, UserRole
 from app.utils.hashing import hash_password
 from app.auth.dependencies import get_current_user
+
 
 # Load environment variables
 load_dotenv()
@@ -36,11 +37,13 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(users_router)            # /users...
-app.include_router(boards_router)           # /boards...
-app.include_router(list_router)             # /boards/{board_id}/lists...
-app.include_router(cards.router)            # /lists/{list_id}/cards...
-app.include_router(admin.router)            # اگر وجود دارد
+app.include_router(users_router)            
+app.include_router(boards_router)           
+app.include_router(list_router)             
+app.include_router(cards.router)            
+app.include_router(admin.router)        
+app.include_router(workspaces.router)   
+
 
 # Root endpoint
 @app.get("/")

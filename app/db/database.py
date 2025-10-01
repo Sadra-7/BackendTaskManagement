@@ -7,25 +7,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-ENV = os.getenv("ENV", "local")
-# اگر ENV=local یا DATABASE_URL تعریف نشده باشد، از sqlite محلی استفاده می‌کنیم
-if ENV == "local":
-    SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./task_manager.db")
-else:
-    SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
-    if not SQLALCHEMY_DATABASE_URL:
-        raise ValueError("DATABASE_URL must be set in production environment")
-
-connect_args = {}
-if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
-    # sqlite نیاز به این گزینه دارد
-    connect_args = {"check_same_thread": False}
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
+if not SQLALCHEMY_DATABASE_URL:
+    raise ValueError("DATABASE_URL must be set!")
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
-    connect_args=connect_args,
-    echo=False,
-    pool_pre_ping=True
+    pool_pre_ping=True,
+    echo=False  
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

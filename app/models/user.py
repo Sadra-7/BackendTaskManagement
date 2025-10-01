@@ -27,6 +27,7 @@ class User(Base):
     boards = relationship("Board", back_populates="owner", cascade="all, delete-orphan")
     lists = relationship("List", back_populates="user", cascade="all, delete-orphan")
     tasks = relationship("Task", back_populates="user")
+    workspaces = relationship("Workspace", back_populates="owner", cascade="all, delete-orphan")
 
     __table_args__ = (
         Index(
