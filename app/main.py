@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from app.db.database import engine, Base, SessionLocal
 from app.routers.users import router as users_router
-from app.routers import users, boards, cards, list_router, admin, workspaces
+from app.routers import users, boards, cards, list_router, admin, workspaces, api
 from app.routers.boards import router as boards_router
 from app.routers.list_router import router as list_router
 from app.routers import cards  # اضافه شد
@@ -42,7 +42,8 @@ app.include_router(boards_router)
 app.include_router(list_router)             
 app.include_router(cards.router)            
 app.include_router(admin.router)        
-app.include_router(workspaces.router)   
+app.include_router(workspaces.router)
+app.include_router(api.router)   
 
 
 # Root endpoint
