@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import List as TypingList, Optional
+from datetime import date
 
 class CardBase(BaseModel):
     text: str
@@ -13,6 +14,12 @@ class CardUpdate(CardBase):
 class Card(CardBase):
     id: int
     list_id: int
+    description: Optional[str] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    position: int = 0
+    members: Optional[list] = []
+    attachments: Optional[list] = []
 
     class Config:
         orm_mode = True

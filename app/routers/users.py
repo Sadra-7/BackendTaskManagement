@@ -12,6 +12,7 @@ from app.utils.hashing import hash_password, verify_password
 from app.utils.send_email import send_email
 from app.utils.send_massage import send_sms
 from app.models.user import User
+from pydantic import BaseModel
 
 router = APIRouter()
 security = HTTPBearer()
@@ -143,4 +144,36 @@ def change_user_role(user_id: int, new_role: UserRole, db: Session = Depends(get
     db.commit()
     db.refresh(user)
     return user
+
+
+# =======================
+# Check availability endpoints
+# =======================
+
+class UsernameCheck(BaseModel):
+    username: str
+
+class EmailCheck(BaseModel):
+    email: str
+
+class PhoneCheck(BaseModel):
+    phone: str
+
+@router.post("/users/check-username")
+def check_username_availability(data: UsernameCheck, db: Session = Depends(get_db)):
+    """Check if username is available"""
+    existing_user = db.query(UserModel).filter(UserModel.username == data.username).first()
+    return {"available": existing_user is None}
+
+@router.post("/users/check-email")
+def check_email_availability(data: EmailCheck, db: Session = Depends(get_db)):
+    """Check if email is available"""
+    existing_user = db.query(UserModel).filter(UserModel.email == data.email).first()
+    return {"available": existing_user is None}
+
+@router.post("/users/check-phone")
+def check_phone_availability(data: PhoneCheck, db: Session = Depends(get_db)):
+    """Check if phone number is available"""
+    existing_user = db.query(UserModel).filter(UserModel.number == data.phone).first()
+    return {"available": existing_user is None}
 
