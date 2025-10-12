@@ -28,6 +28,8 @@ class User(Base):
     lists = relationship("List", back_populates="user", cascade="all, delete-orphan")
     tasks = relationship("Task", back_populates="user")
     workspaces = relationship("Workspace", back_populates="owner", cascade="all, delete-orphan")
+    sent_invitations = relationship("BoardInvitation", foreign_keys="BoardInvitation.inviter_id", back_populates="inviter")
+    board_memberships = relationship("BoardMember", back_populates="user")
 
     __table_args__ = (
         Index(

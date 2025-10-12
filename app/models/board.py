@@ -13,4 +13,6 @@ class Board(Base):
     workspace = relationship("Workspace", back_populates="boards")
     lists = relationship("List", back_populates="board", cascade="all, delete-orphan")
     owner = relationship("User", back_populates="boards")
+    invitations = relationship("BoardInvitation", back_populates="board", cascade="all, delete-orphan")
+    members = relationship("BoardMember", back_populates="board", cascade="all, delete-orphan")
   

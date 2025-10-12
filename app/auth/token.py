@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from jose import jwt, JWTError
 from fastapi import HTTPException, status
 
-SECRET_KEY = "your-very-secret-key"  # حتماً یک کلید طولانی و امن بذار
+SECRET_KEY = "your-very-secret-key"  
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 

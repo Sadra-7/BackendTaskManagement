@@ -5,16 +5,30 @@ from app.db.database import get_db
 from app.schemas import list as list_schema
 from app.crud import list_crud
 from app.models.board import Board
+from app.models.invitation import BoardMember
 from app.auth.dependencies import get_current_user
 from app.models.user import User
 
 router = APIRouter(prefix="/boards/{board_id}/lists", tags=["lists"])
 
 def _ensure_board_and_owner(db: Session, board_id: int, current_user: User):
+    # Check if user is owner
     board = db.query(Board).filter(Board.id == board_id, Board.owner_id == current_user.id).first()
-    if not board:
-        raise HTTPException(status_code=404, detail="Board not found or access denied")
-    return board
+    if board:
+        return board
+    
+    # Check if user is a member
+    member = db.query(BoardMember).filter(
+        BoardMember.board_id == board_id,
+        BoardMember.user_id == current_user.id
+    ).first()
+    
+    if member:
+        # Get the board for members
+        board = db.query(Board).filter(Board.id == board_id).first()
+        return board
+    
+    raise HTTPException(status_code=404, detail="Board not found or access denied")
 
 @router.get("/", response_model=TypingList[list_schema.List])
 def read_lists(board_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):

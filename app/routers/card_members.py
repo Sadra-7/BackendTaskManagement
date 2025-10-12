@@ -5,12 +5,30 @@ from app.models.user import User
 from app.models.card import Card
 from app.models.list import List
 from app.models.board import Board
+from app.models.invitation import BoardMember
 from app.auth.dependencies import get_current_user
 from app.utils.send_email import send_email
 from typing import List as TypingList
 from pydantic import BaseModel
 
 router = APIRouter()
+
+def has_board_access(db: Session, user_id: int, board_id: int) -> bool:
+    """
+    Check if user has access to a board (either as owner or member)
+    """
+    # Check if user is owner
+    board = db.query(Board).filter(Board.id == board_id, Board.owner_id == user_id).first()
+    if board:
+        return True
+    
+    # Check if user is a member
+    member = db.query(BoardMember).filter(
+        BoardMember.board_id == board_id,
+        BoardMember.user_id == user_id
+    ).first()
+    
+    return member is not None
 
 class MemberAssignment(BaseModel):
     user_id: int
@@ -43,8 +61,8 @@ async def add_member_to_card(
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
     
-    # Check if current user has permission (board owner or admin)
-    if board.owner_id != current_user.id and current_user.role not in ["ADMIN", "SUPERADMIN"]:
+    # Check if current user has permission (board owner, member, or admin)
+    if not has_board_access(db, current_user.id, board.id) and current_user.role not in ["ADMIN", "SUPERADMIN"]:
         raise HTTPException(status_code=403, detail="Not authorized to add members")
     
     # Get the user to be added as member
@@ -123,8 +141,8 @@ async def remove_member_from_card(
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
     
-    # Check if current user has permission (board owner or admin)
-    if board.owner_id != current_user.id and current_user.role not in ["ADMIN", "SUPERADMIN"]:
+    # Check if current user has permission (board owner, member, or admin)
+    if not has_board_access(db, current_user.id, board.id) and current_user.role not in ["ADMIN", "SUPERADMIN"]:
         raise HTTPException(status_code=403, detail="Not authorized to remove members")
     
     # Remove member from card
@@ -163,7 +181,7 @@ async def get_card_members(
         raise HTTPException(status_code=404, detail="Board not found")
     
     # Check if current user has permission to view board
-    if board.owner_id != current_user.id and current_user.role not in ["ADMIN", "SUPERADMIN"]:
+    if not has_board_access(db, current_user.id, board.id) and current_user.role not in ["ADMIN", "SUPERADMIN"]:
         raise HTTPException(status_code=403, detail="Not authorized to view members")
     
     # Get member details
@@ -194,7 +212,7 @@ async def get_available_members(
         raise HTTPException(status_code=404, detail="Board not found")
     
     # Check if current user has permission
-    if board.owner_id != current_user.id and current_user.role not in ["ADMIN", "SUPERADMIN"]:
+    if not has_board_access(db, current_user.id, board.id) and current_user.role not in ["ADMIN", "SUPERADMIN"]:
         raise HTTPException(status_code=403, detail="Not authorized to view available members")
     
     # Get all users (in a real app, you might want to limit this to board members)
