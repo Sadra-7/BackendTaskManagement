@@ -228,4 +228,83 @@ async def get_available_members(
     
     return {"available_members": available_members}
 
+@router.get("/boards/{board_id}/members")
+async def get_board_members(
+    board_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all members of a board"""
+    
+    # Get the board
+    board = db.query(Board).filter(Board.id == board_id).first()
+    if not board:
+        raise HTTPException(status_code=404, detail="Board not found")
+    
+    # Check if current user has permission
+    if not has_board_access(db, current_user.id, board.id) and current_user.role not in ["ADMIN", "SUPERADMIN"]:
+        raise HTTPException(status_code=403, detail="Not authorized to view board members")
+    
+    # Get board members
+    members = db.query(BoardMember).filter(
+        BoardMember.board_id == board_id
+    ).all()
+    
+    # Format the response
+    board_members = []
+    for member in members:
+        if member.user:
+            board_members.append({
+                "user_id": member.user_id,
+                "user": {
+                    "id": member.user.id,
+                    "username": member.user.username,
+                    "email": member.user.email
+                },
+                "role": member.role.value,
+                "joined_at": member.joined_at.isoformat()
+            })
+    
+    return board_members
+
+@router.delete("/boards/{board_id}/leave")
+async def leave_board(
+    board_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Allow a board member to leave the board"""
+    
+    # Get the board
+    board = db.query(Board).filter(Board.id == board_id).first()
+    if not board:
+        raise HTTPException(status_code=404, detail="Board not found")
+    
+    # Check if user is the board owner
+    if board.owner_id == current_user.id:
+        raise HTTPException(
+            status_code=400, 
+            detail="Board owner cannot leave the board. Transfer ownership or delete the board instead."
+        )
+    
+    # Check if user is a member of the board
+    member = db.query(BoardMember).filter(
+        BoardMember.board_id == board_id,
+        BoardMember.user_id == current_user.id
+    ).first()
+    
+    if not member:
+        raise HTTPException(
+            status_code=404, 
+            detail="You are not a member of this board"
+        )
+    
+    # Remove the member from the board
+    db.delete(member)
+    db.commit()
+    
+    return {"message": "Successfully left the board"}
+
+
+
 

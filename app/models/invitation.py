@@ -81,3 +81,5 @@ class BoardMember(Base):
                 "full_name": self.user.full_name
             } if self.user else None
         }
+
+
