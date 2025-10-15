@@ -421,9 +421,9 @@ def init_superadmin(db):
         )
         db.add(new_superadmin)
         db.commit()
-        print(f"✅ Superadmin created -> Email: {superadmin_email} | Password: admin1234")
+        print(f"SUCCESS: Superadmin created -> Email: {superadmin_email} | Password: admin1234")
     else:
-        print("ℹ️ Superadmin already exists.")
+        print("INFO: Superadmin already exists.")
 
 @app.on_event("startup")
 def on_startup():

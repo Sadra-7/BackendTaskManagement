@@ -9,6 +9,19 @@ from app.schemas.workspace import WorkspaceCreate, WorkspaceUpdate
 # ایجاد ورک‌اسپیس جدید
 # -----------------------
 def create_workspace(db: Session, user_id: int, data: WorkspaceCreate) -> Workspace:
+    # Check if workspace with same name already exists for this user
+    existing_workspace = db.query(Workspace).filter(
+        Workspace.name == data.name,
+        Workspace.owner_id == user_id
+    ).first()
+    
+    if existing_workspace:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail=f"A workspace with the name '{data.name}' already exists. Please choose a different name."
+        )
+    
     ws = Workspace(name=data.name, owner_id=user_id)
     db.add(ws)
     db.commit()
@@ -40,6 +53,20 @@ def update_workspace(db: Session, workspace_id: int, data: WorkspaceUpdate) -> O
     if not ws:
         return None
     if data.name:
+        # Check if another workspace with same name already exists for this user
+        existing_workspace = db.query(Workspace).filter(
+            Workspace.name == data.name,
+            Workspace.owner_id == ws.owner_id,
+            Workspace.id != workspace_id  # Exclude current workspace from check
+        ).first()
+        
+        if existing_workspace:
+            from fastapi import HTTPException
+            raise HTTPException(
+                status_code=400,
+                detail=f"A workspace with the name '{data.name}' already exists. Please choose a different name."
+            )
+        
         ws.name = data.name
     db.commit()
     db.refresh(ws)

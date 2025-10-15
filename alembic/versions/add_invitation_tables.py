@@ -65,3 +65,6 @@ def downgrade():
     op.drop_table('board_invitations')
 
 
+
+
+

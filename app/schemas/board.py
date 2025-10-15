@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 class BoardBase(BaseModel):
     title: str
@@ -14,7 +15,7 @@ class BoardUpdate(BaseModel):
 class Board(BoardBase):
     id: int
     owner_id: int
-    workspace_id: int
+    workspace_id: Optional[int] = None
 
     class Config:
         orm_mode = True

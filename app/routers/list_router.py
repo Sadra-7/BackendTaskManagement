@@ -67,7 +67,21 @@ def add_card(board_id: int, list_id: int, card_in: list_schema.CardCreate, db: S
 @router.patch("/{list_id}/cards/{card_id}", response_model=list_schema.Card)
 def update_card(board_id: int, list_id: int, card_id: int, card_update: list_schema.CardUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     _ensure_board_and_owner(db, board_id, current_user)
-    db_card = list_crud.update_card(db, list_id=list_id, card_id=card_id, text=card_update.text, new_list_id=getattr(card_update, "list_id", None))
+    
+    # Debug logging
+    print(f"DEBUG: update_card called with board_id={board_id}, list_id={list_id}, card_id={card_id}")
+    print(f"DEBUG: card_update data: {card_update}")
+    print(f"DEBUG: card_update.list_id: {getattr(card_update, 'list_id', 'NOT_FOUND')}")
+    print(f"DEBUG: card_update.position: {getattr(card_update, 'position', 'NOT_FOUND')}")
+    
+    db_card = list_crud.update_card(
+        db, 
+        list_id=list_id, 
+        card_id=card_id, 
+        text=card_update.text, 
+        new_list_id=getattr(card_update, "list_id", None),
+        position=getattr(card_update, "position", None)
+    )
     if not db_card:
         raise HTTPException(status_code=404, detail="Card not found")
     return db_card

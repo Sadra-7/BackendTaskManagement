@@ -172,6 +172,18 @@ def create_board(
     if not hasattr(board_in, "workspace_id") or board_in.workspace_id is None:
         raise HTTPException(status_code=400, detail="workspace_id باید مشخص شود")
     
+    # Check if board with same name already exists in this workspace
+    existing_board = db.query(Board).filter(
+        Board.title == board_in.title,
+        Board.workspace_id == board_in.workspace_id
+    ).first()
+    
+    if existing_board:
+        raise HTTPException(
+            status_code=400,
+            detail=f"A board with the name '{board_in.title}' already exists in this workspace. Please choose a different name."
+        )
+    
     new_board = Board(
         title=board_in.title,
         owner_id=current_user.id,
@@ -221,3 +233,135 @@ def delete_board(
     db.delete(board)
     db.commit()
     return None
+
+# -----------------------
+# انتقال برد به ورک‌اسپیس دیگر
+# -----------------------
+@router.patch("/{board_id}/move", response_model=BoardSchema)
+def move_board(
+    board_id: int,
+    new_workspace_id: int = Query(..., description="شناسه ورک‌اسپیس جدید"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    انتقال یک برد به ورک‌اسپیس دیگر (فقط مالک برد می‌تواند انتقال دهد)
+    """
+    # Check if user has access to the board
+    if not has_board_access(db, current_user.id, board_id):
+        raise HTTPException(status_code=403, detail="You don't have permission to move this board")
+    
+    # Get the board
+    board = db.query(Board).filter(Board.id == board_id).first()
+    if not board:
+        raise HTTPException(status_code=404, detail="Board not found")
+    
+    # Check if user is the owner (only owner can move board)
+    if board.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Only board owner can move the board")
+    
+    # Check if a board with the same name already exists in the target workspace
+    existing_board = db.query(Board).filter(
+        Board.title == board.title,
+        Board.workspace_id == new_workspace_id,
+        Board.id != board_id  # Exclude the current board from the check
+    ).first()
+    
+    if existing_board:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"A board with the name '{board.title}' already exists in the target workspace. Please rename the board first."
+        )
+    
+    # Update the workspace_id
+    board.workspace_id = new_workspace_id
+    db.commit()
+    db.refresh(board)
+    
+    return board
+
+@router.post("/{board_id}/copy", response_model=BoardSchema)
+def copy_board(
+    board_id: int,
+    new_workspace_id: int = Query(..., description="شناسه ورک‌اسپیس مقصد"),
+    new_title: str = Query(None, description="عنوان جدید برای برد کپی شده (اختیاری)"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    کپی کردن یک برد به ورک‌اسپیس دیگر
+    """
+    # Check if user has access to the board
+    if not has_board_access(db, current_user.id, board_id):
+        raise HTTPException(status_code=403, detail="You don't have permission to copy this board")
+    
+    # Get the original board
+    original_board = db.query(Board).filter(Board.id == board_id).first()
+    if not original_board:
+        raise HTTPException(status_code=404, detail="Board not found")
+    
+    # Determine the new board title
+    final_title = new_title or f"{original_board.title} (Copy)"
+    
+    # Check if a board with the same name already exists in the target workspace
+    existing_board = db.query(Board).filter(
+        Board.title == final_title,
+        Board.workspace_id == new_workspace_id
+    ).first()
+    
+    if existing_board:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"A board with the name '{final_title}' already exists in the target workspace. Please choose a different name."
+        )
+    
+    # Create new board with copied data
+    new_board = Board(
+        title=final_title,
+        workspace_id=new_workspace_id,
+        owner_id=current_user.id
+    )
+    
+    db.add(new_board)
+    db.commit()
+    db.refresh(new_board)
+    
+    # Copy all lists and cards from the original board
+    from app.models.list import List
+    from app.models.card import Card
+    
+    # Get all lists from the original board
+    original_lists = db.query(List).filter(List.board_id == board_id).all()
+    
+    for original_list in original_lists:
+        # Create new list
+        new_list = List(
+            title=original_list.title,
+            board_id=new_board.id,
+            user_id=original_list.user_id,
+            color=original_list.color
+        )
+        db.add(new_list)
+        db.commit()
+        db.refresh(new_list)
+        
+        # Get all cards from the original list
+        original_cards = db.query(Card).filter(Card.list_id == original_list.id).all()
+        
+        for original_card in original_cards:
+            # Create new card
+            new_card = Card(
+                text=original_card.text,
+                description=original_card.description,
+                start_date=original_card.start_date,
+                end_date=original_card.end_date,
+                list_id=new_list.id,
+                position=original_card.position,
+                members=original_card.members,
+                attachments=original_card.attachments
+            )
+            db.add(new_card)
+    
+    db.commit()
+    
+    return new_board

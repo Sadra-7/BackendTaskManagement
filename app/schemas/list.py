@@ -9,7 +9,8 @@ class CardCreate(CardBase):
     pass
 
 class CardUpdate(CardBase):
-    pass
+    list_id: Optional[int] = None
+    position: Optional[int] = None
 
 class Card(CardBase):
     id: int
